@@ -18,6 +18,9 @@ from social.exceptions import AuthException, AuthFailed, AuthCanceled, \
 from social.backends.base import BaseAuth
 from social.backends.oauth import BaseOAuth2
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 # OpenID configuration
 OLD_AX_ATTRS = [
@@ -314,7 +317,9 @@ def _autoconf(name):
     configuration
     """
     def getter(self):
-        return self.oidc_config().get(name)
+        value = self.oidc_config().get(name)
+        logger.warn("Got value {} for name {}".format(value, name))
+        return value
     return getter
 
 
@@ -450,16 +455,19 @@ class OpenIdConnectAuth(BaseOAuth2):
         return response
 
     def user_data(self, access_token, *args, **kwargs):
+        logger.warn("access token: {}".format(access_token))
         return self.get_json(self.USERINFO_URL,
                              headers={'Authorization':
                                           'Bearer {0}'.format(access_token)})
 
     def get_user_details(self, response):
         username_key = self.setting('USERNAME_KEY', default=self.USERNAME_KEY)
-        return {
+        user_data = {
             'username': response.get(username_key),
             'email': response.get('email'),
             'fullname': response.get('name'),
             'first_name': response.get('given_name'),
             'last_name': response.get('family_name'),
         }
+        logger.warn("userdata {}".format(user_data))
+        return user_data

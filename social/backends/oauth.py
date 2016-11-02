@@ -1,3 +1,4 @@
+import logging
 import six
 
 from requests_oauthlib import OAuth1
@@ -9,6 +10,8 @@ from social.exceptions import AuthFailed, AuthCanceled, AuthUnknownError, \
                               AuthMissingParameter, AuthStateMissing, \
                               AuthStateForbidden, AuthTokenError
 from social.backends.base import BaseAuth
+
+logger = logging.getLogger(__name__)
 
 
 class OAuthAuth(BaseAuth):
@@ -408,15 +411,33 @@ class BaseOAuth2(OAuthAuth):
         return response.json()
 
     def refresh_token(self, token, *args, **kwargs):
+        logger.warn("Refreshing access token using refresh token {}".format(token))
         params = self.refresh_token_params(token, *args, **kwargs)
+        logger.warn("Got following refresh params {}".format(params))
         url = self.refresh_token_url()
+        logger.warn("Refresh using the refresh url {}".format(url))
+        logger.warn("access token url is {}".format(self.access_token_url()))
         method = self.REFRESH_TOKEN_METHOD
+        logger.warn("Refresh method {} is used".format(method))
         key = 'params' if method == 'GET' else 'data'
+        logger.warn("Using key {} which contains authentication data".format(key))
         request_args = {'headers': self.auth_headers(),
                         'method': method,
                         key: params}
+        logger.warn("The complete request args is {}".format(request_args))
         request = self.request(url, **request_args)
-        return self.process_refresh_token_response(request, *args, **kwargs)
+        logger.warn("Done request")
+        try:
+            logger.warn("Request has status {}".format(request.code))
+            logger.warn("Request body is {}".format(request.body))
+        except Exception:
+            pass
+
+        json_ret = self.process_refresh_token_response(request, *args, **kwargs)
+        logger.warn("Request json response was {}".format(json_ret))
+        return json_ret
 
     def refresh_token_url(self):
-        return self.REFRESH_TOKEN_URL or self.access_token_url()
+        url = self.REFRESH_TOKEN_URL or self.access_token_url()
+        logger.warn("Refresh token url: '{}'".format(url))
+        return url

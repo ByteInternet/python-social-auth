@@ -3,6 +3,9 @@ from requests import request, ConnectionError
 from social.utils import SSLHttpAdapter, module_member, parse_qs, user_agent
 from social.exceptions import AuthFailed
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class BaseAuth(object):
     """A django.contrib.auth backend that authenticates the user based on

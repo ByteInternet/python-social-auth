@@ -2,6 +2,9 @@ from social.p3 import quote
 from social.utils import sanitize_redirect, user_is_authenticated, \
                          user_is_active, partial_pipeline_data, setting_url
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def do_auth(backend, redirect_name='next'):
     # Clean any partial pipeline data
@@ -35,6 +38,8 @@ def do_complete(backend, login, user=None, redirect_name='next',
     is_authenticated = user_is_authenticated(user)
     user = is_authenticated and user or None
 
+    logger.warn('Complete authentication for user {}'.format(user))
+
     partial = partial_pipeline_data(backend, user, *args, **kwargs)
     if partial:
         xargs, xkwargs = partial
@@ -47,8 +52,11 @@ def do_complete(backend, login, user=None, redirect_name='next',
     redirect_value = backend.strategy.session_get(redirect_name, '') or \
                      data.get(redirect_name, '')
 
+    logger.warn("Got following completing redirect value {} usering name {}".format(redirect_value, redirect_name))
+
     user_model = backend.strategy.storage.user.user_model()
     if user and not isinstance(user, user_model):
+        logger.warn('Complete has final user {}'.format(user))
         return user
 
     if is_authenticated:
